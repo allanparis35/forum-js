@@ -1,0 +1,17 @@
+# Binaires Go
+/forum
+*.exe 
+
+# Environnement et secrets
+.env
+.env.local 
+
+# Base de données (si SQLite)
+*.db 
+
+# Uploads d'utilisateurs
+/uploads/* 
+
+# IDE
+.vscode/
+.idea/
