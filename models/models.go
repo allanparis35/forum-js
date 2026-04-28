@@ -46,3 +46,4 @@ type Like struct {
 	PostID uint `gorm:"not null;uniqueIndex:idx_user_post"`
 	IsLike bool `gorm:"not null"`
 }
+
