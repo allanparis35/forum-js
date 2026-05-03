@@ -37,8 +37,16 @@ func main() {
 		log.Fatal("Impossible de se connecter à la DB :", err)
 	}
 
-	//Migrations automatiques 
-	err = db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}, &models.Like{}, &models.Tag{}, &models.PostTag{})
+	//Migrations automatiques
+	modelsToMigrate := []interface{}{
+		&models.User{},
+		&models.Post{},
+		&models.Comment{},
+		&models.Like{},
+		&models.Tag{},
+		&models.PostTag{},
+	}
+	err = db.AutoMigrate(modelsToMigrate...)
 	if err != nil {
 		log.Fatal("Erreur de migration :", err)
 	}
