@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"encoding/json"
+	"net/url"
 
 	"FORUM-js/database"
 	"FORUM-js/src/handlers"
@@ -77,4 +79,27 @@ func main() {
 
 	fmt.Printf("Serveur Forum Warframe lancé sur http://localhost:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+	type CaptchaResponse struct {
+	Success bool `json:"success"`
+}
+// Fonction de vérification du captcha
+func verifyCaptcha(token string) (bool, error) {
+	resp, err := http.PostForm(
+		"https://www.google.com/recaptcha/api/siteverify",
+		url.Values{
+			"secret":   {"TOKEN_SECRET_RECAPTCHA"},
+			"response": {token},
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var result CaptchaResponse
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	return result.Success, nil
 }

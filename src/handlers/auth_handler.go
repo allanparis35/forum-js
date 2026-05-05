@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"FORUM-js/database"
+	"FORUM-js/models"
+	"FORUM-js/src/utils"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"time"
-	"FORUM-js/models"
-	"FORUM-js/database"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgconn" //détecter les erreurs de duplication
 	"golang.org/x/crypto/bcrypt"
@@ -26,6 +28,7 @@ type RegisterResponse struct {
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Captcha  string `json:"captcha"`
 }
 
 type LoginResponse struct {
@@ -89,47 +92,52 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Email == "" || req.Password == "" {
-		http.Error(w, "email and password requi", http.StatusBadRequest)
+		http.Error(w, "email and password required", http.StatusBadRequest)
 		return
 	}
 
-    var user models.User 
+	var user models.User
 
-    //Recherche de l'utilisateur par email avec GORM
-    result := database.DB.Where("email = ?", req.Email).First(&user)
+	// Vérification du captcha
+	valid, err := utils.VerifyCaptcha(req.Captcha)
+	if err != nil || !valid {
+		http.Error(w, "captcha invalide", http.StatusForbidden)
+		return
+	}
+	//Recherche de l'utilisateur par email avec GORM
+	result := database.DB.Where("email = ?", req.Email).First(&user)
 
-    if result.Error != nil {
-        http.Error(w, "utilisateur non trouvé", http.StatusUnauthorized)
-        return
-    }
+	if result.Error != nil {
+		http.Error(w, "utilisateur non trouvé", http.StatusUnauthorized)
+		return
+	}
 
-    //Vérification du mot de passe avec bcrypt
-    if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-        http.Error(w, "mot de passe invalide", http.StatusUnauthorized)
-        return
-    }
+	//Vérification du mot de passe avec bcrypt
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		http.Error(w, "mot de passe invalide", http.StatusUnauthorized)
+		return
+	}
 
-    //Préparation des Claims JWT
-    secret := os.Getenv("JWT_SECRET")
-    if secret == "" {
-        http.Error(w, "JWT secret non configuré", http.StatusInternalServerError)
-        return
-    }
+	//Préparation des Claims JWT
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		http.Error(w, "JWT secret non configuré", http.StatusInternalServerError)
+		return
+	}
 
-    claims := jwt.MapClaims{
-        "user_id": user.ID,       
-        "role":    user.IsAdmin,  
-        "exp":     time.Now().Add(2 * time.Hour).Unix(),
-    }
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"role":    user.IsAdmin,
+		"exp":     time.Now().Add(2 * time.Hour).Unix(),
+	}
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		http.Error(w, "erreur de génération du token", http.StatusInternalServerError)
+		return
+	}
 
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    tokenString, err := token.SignedString([]byte(secret))
-    if err != nil {
-        http.Error(w, "erreur de génération du token", http.StatusInternalServerError)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(LoginResponse{Token: tokenString})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(LoginResponse{Token: tokenString})
 }

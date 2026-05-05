@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/allanparis35/forum-js/issues"
   },
-  "homepage": "https://github.com/allanparis35/forum-js#readme"
+  "homepage": "https://github.com/allanparis35/forum-js#readme",
+  "dependencies": {
+    "react-google-recaptcha": "^3.1.0"
+  }
 }
