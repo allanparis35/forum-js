@@ -66,7 +66,7 @@ func main() {
 
 	http.Handle("/api/register", corsMiddleware(http.HandlerFunc(handlers.Register)))
 	http.Handle("/api/login", corsMiddleware(http.HandlerFunc(handlers.Login)))
-
+	http.HandleFunc("/login", middleware.CaptchaMiddleware(handlers.Login))
 	//Serveur de fichiers statiques
 	fileServer := http.FileServer(http.Dir("./public"))
 	http.Handle("/", fileServer)

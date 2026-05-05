@@ -7,7 +7,6 @@ import (
 	"os"
 )
 
-// Fonction de vérification du captcha
 func VerifyCaptcha(token string) (bool, error) {
 	resp, err := http.PostForm(
 		"https://www.google.com/recaptcha/api/siteverify",
