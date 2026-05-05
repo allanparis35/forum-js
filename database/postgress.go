@@ -1,22 +1,21 @@
 package database
 
 import (
-	"context"
-	"errors"
 	"os"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
-
-var DB *pgxpool.Pool
+var DB *gorm.DB
 
 func Connect() error {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		return errors.New("DATABASE_URL not set")
+	// Récupère l'URL de connexion depuis le .env
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		return gorm.ErrInvalidDB 
 	}
 
-	db, err := pgxpool.New(context.Background(), databaseURL)
+	// Connexion via GORM
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
 	}

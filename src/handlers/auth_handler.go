@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
+	"FORUM-js/models"
 	"FORUM-js/database"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgconn" //détecter les erreurs de duplication
@@ -59,17 +58,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Tentative d'ajout user :", req.Email)
 
-	err = database.DB.QueryRow(
-		context.Background(),
-		`INSERT INTO users (email, password_hash, role)
-         VALUES ($1, $2, 'user')
-         RETURNING id`,
-		req.Email,
-		string(hash),
-	).Scan(&userID)
+	user := models.User{Email: req.Email, Password: string(hash)}
+	result := database.DB.Create(&user)
 	// gérer les erreurs de duplication d'email
-	if err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
+	if result.Error != nil {
+		if pgErr, ok := result.Error.(*pgconn.PgError); ok && pgErr.Code == "23505" {
 			http.Error(w, "email already exists", http.StatusConflict)
 			return
 		}
@@ -100,42 +93,43 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var id int
-	var hash, role string
-	err := database.DB.QueryRow(
-		context.Background(),
-		`SELECT id, password_hash, role FROM users WHERE email=$1`,
-		req.Email,
-	).Scan(&id, &hash, &role)
+    var user models.User 
 
-	if err != nil {
-		http.Error(w, "user invalide", http.StatusUnauthorized)
-		return
-	}
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(req.Password)); err != nil {
-		http.Error(w, "imdp invalide", http.StatusUnauthorized)
-		return
-	}
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		http.Error(w, "JWT pas secret", http.StatusInternalServerError)
-		return
-	}
+    //Recherche de l'utilisateur par email avec GORM
+    result := database.DB.Where("email = ?", req.Email).First(&user)
 
-	claims := jwt.MapClaims{
-		"user_id": id,
-		"role":    role,
-		"exp":     time.Now().Add(2 * time.Hour).Unix(),
-	}
+    if result.Error != nil {
+        http.Error(w, "utilisateur non trouvé", http.StatusUnauthorized)
+        return
+    }
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// signer le token avec la clé secrète
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-	if err != nil {
-		http.Error(w, "vous ne pouvez pas créer de token", http.StatusInternalServerError)
-		return
-	}
+    //Vérification du mot de passe avec bcrypt
+    if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+        http.Error(w, "mot de passe invalide", http.StatusUnauthorized)
+        return
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(LoginResponse{Token: tokenString})
+    //Préparation des Claims JWT
+    secret := os.Getenv("JWT_SECRET")
+    if secret == "" {
+        http.Error(w, "JWT secret non configuré", http.StatusInternalServerError)
+        return
+    }
+
+    claims := jwt.MapClaims{
+        "user_id": user.ID,       
+        "role":    user.IsAdmin,  
+        "exp":     time.Now().Add(2 * time.Hour).Unix(),
+    }
+
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    tokenString, err := token.SignedString([]byte(secret))
+    if err != nil {
+        http.Error(w, "erreur de génération du token", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(LoginResponse{Token: tokenString})
 }

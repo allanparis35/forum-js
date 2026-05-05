@@ -6,13 +6,18 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"FORUM-js/models"
+
+	"FORUM-js/database"
+	"FORUM-js/src/handlers"
+	"FORUM-js/src/middleware"
+	"FORUM-js/src/models"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func main() {
-	//Récupération des variables d'environnement
+	// Récupération des variables d'environnement
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
@@ -20,16 +25,16 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
-	//Connexion à PostgreSQL via l'ORM GORM
+	// Connexion à PostgreSQL via l'ORM GORM
 	var db *gorm.DB
 	var err error
 
-	// Boucle de tentative pour attendre que le conteneur Postgres soit prêt
 	for i := 0; i < 5; i++ {
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err == nil {
 			break
 		}
+		fmt.Println("Attente de la base de données...")
 		time.Sleep(2 * time.Second)
 	}
 
@@ -37,7 +42,9 @@ func main() {
 		log.Fatal("Impossible de se connecter à la DB :", err)
 	}
 
-	//Migrations automatiques
+	database.DB = db
+
+	// Migrations automatiques
 	modelsToMigrate := []interface{}{
 		&models.User{},
 		&models.Post{},
@@ -52,12 +59,22 @@ func main() {
 	}
 	fmt.Println("Base de données prête et migrations terminées")
 
+	// On applique le middleware CORS sur nos routes API
+	corsMiddleware := middleware.CORS()
+
+	http.Handle("/api/register", corsMiddleware(http.HandlerFunc(handlers.Register)))
+	http.Handle("/api/login", corsMiddleware(http.HandlerFunc(handlers.Login)))
+
 	//Serveur de fichiers statiques
 	fileServer := http.FileServer(http.Dir("./public"))
 	http.Handle("/", fileServer)
 
-	//Lancement du serveur
-	port := "8080"
+	// Lancement du serveur
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	fmt.Printf("Serveur Forum Warframe lancé sur http://localhost:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
