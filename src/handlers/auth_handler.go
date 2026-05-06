@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"FORUM-js/models"
+	"FORUM-js/src/models"
 	"FORUM-js/database"
-
+	"github.com/jackc/pgconn" // pour gérer les erreurs de duplication d'email
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jackc/pgconn" //détecter les erreurs de duplication
 	"golang.org/x/crypto/bcrypt"
 )
 

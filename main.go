@@ -84,12 +84,12 @@ func main() {
 	type CaptchaResponse struct {
 	Success bool `json:"success"`
 }
-// Fonction de vérification du captcha
-func verifyCaptcha(token string) (bool, error) {
+//Fonction de vérification du captcha
+func VerifyCaptcha(token string) (bool, error) {
 	resp, err := http.PostForm(
 		"https://www.google.com/recaptcha/api/siteverify",
 		url.Values{
-			"secret":   {"TOKEN_SECRET_RECAPTCHA"},
+			"secret":   {os.Getenv("ECRET_CAPTCHA_KEY")},
 			"response": {token},
 		},
 	)
