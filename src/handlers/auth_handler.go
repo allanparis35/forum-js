@@ -11,6 +11,8 @@ import (
 	"github.com/jackc/pgconn" // pour gérer les erreurs de duplication d'email
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"crypto/rand"
+	"encoding/hex"
 )
 
 type RegisterRequest struct {
@@ -32,6 +34,7 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	Token string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -131,8 +134,24 @@ func Login(w http.ResponseWriter, r *http.Request) {
     if err != nil {
         http.Error(w, "erreur de génération du token", http.StatusInternalServerError)
         return
+    }		
+
+    // Génération d'une chaîne aléatoire unique pour le refresh token
+    b := make([]byte, 32)
+    rand.Read(b)
+    refreshToken := hex.EncodeToString(b)
+
+    // Sauvegarde du refresh token dans la base de données pour cet utilisateur[cite: 1]
+    user.RefreshToken = refreshToken
+    if err := database.DB.Save(&user).Error; err != nil {
+        http.Error(w, "erreur de sauvegarde du refresh token", http.StatusInternalServerError)
+        return
     }
 
+    //reponse 
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(LoginResponse{Token: tokenString})
+    json.NewEncoder(w).Encode(LoginResponse{
+        Token:        tokenString,
+        RefreshToken: refreshToken,
+    })
 }
