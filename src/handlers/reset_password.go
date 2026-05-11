@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"FORUM-js/src/utils"
     "FORUM-js/database"
     "FORUM-js/src/models"
     "encoding/json"
     "net/http"
     "time"
+	"fmt"
 )
 
 func ResetPassword(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +36,12 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 
         database.DB.Create(&userToken)
 
+		err := utils.SendResetEmail(user.Email, tokenStr)
+    if err != nil {
+        fmt.Println("Erreur d'envoi du mail :", err)
+    }
+	}
+
     //Réponse toujours positive (Sécurité : on ne confirme pas si l'email existe ou non)
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusOK)
@@ -41,4 +49,3 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
         "message": "Si cet email existe, un lien de réinitialisation a été envoyé.",
     })
 }	
-}
