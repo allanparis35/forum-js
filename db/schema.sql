@@ -51,6 +51,7 @@ CREATE TABLE post_tags (
 
 CREATE TABLE user_tokens (
     id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES user(id) ON DELETE CASCADE,
     token TEXT NOT NULL,
     type VARCHAR(20) NOT NULL, -- "access" ou "refresh"
     expires_at TIMESTAMP NOT NULL
