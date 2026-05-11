@@ -51,3 +51,10 @@ type PostTag struct {
 	PostID uint `gorm:"primaryKey"`
 	TagID  uint `gorm:"primaryKey"`
 }
+
+type UserToken struct {
+	ID		uint      `gorm:"primaryKey"`
+	Token	string    `gorm:"type:text;not null"`
+	Type	string    `gorm:"type:varchar(20);not null"` // "access" ou "refresh"
+	ExpiresAt time.Time `gorm:"not null"`
+}

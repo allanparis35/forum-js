@@ -48,3 +48,10 @@ CREATE TABLE post_tags (
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
+
+CREATE TABLE user_tokens (
+    id SERIAL PRIMARY KEY,
+    token TEXT NOT NULL,
+    type VARCHAR(20) NOT NULL, -- "access" ou "refresh"
+    expires_at TIMESTAMP NOT NULL
+);
