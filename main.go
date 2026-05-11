@@ -67,6 +67,9 @@ func main() {
 	http.Handle("/api/register", corsMiddleware(http.HandlerFunc(handlers.Register)))
 	http.Handle("/api/login", corsMiddleware(http.HandlerFunc(handlers.Login)))
 	http.HandleFunc("/login", middleware.CaptchaMiddleware(handlers.Login))
+	http.HandleFunc("/confirm-reset-password", confirmResetPassword)
+	http.HandleFunc("/reset-password", resetPassword)
+	http.Handle("/api/refresh-token", corsMiddleware(http.HandlerFunc(handlers.RefreshToken)))
 	//Serveur de fichiers statiques
 	fileServer := http.FileServer(http.Dir("./public"))
 	http.Handle("/", fileServer)
@@ -102,4 +105,12 @@ func VerifyCaptcha(token string) (bool, error) {
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	return result.Success, nil
+}
+
+func confirmResetPassword(w http.ResponseWriter, r *http.Request) {
+	handlers.ConfirmResetPassword(w, r)
+}
+
+func resetPassword(w http.ResponseWriter, r *http.Request) {
+	handlers.ResetPassword(w, r)
 }
