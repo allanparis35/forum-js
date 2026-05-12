@@ -1,116 +1,32 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"time"
-	"encoding/json"
-	"net/url"
-
-	"FORUM-js/database"
-	"FORUM-js/src/handlers"
-	"FORUM-js/src/middleware"
-	"FORUM-js/src/models"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+    "log"
+    "net/http"
+    "os"
+    "FORUM-js/database"
+    "FORUM-js/src/router"
+    "github.com/joho/godotenv"
 )
 
 func main() {
-	// Récupération des variables d'environnement
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-	)
+    //Charger le fichier .env
+    if err := godotenv.Load(); err != nil {
+        log.Println("No .env file found")
+    }
 
-	// Connexion à PostgreSQL via l'ORM GORM
-	var db *gorm.DB
-	var err error
+    //Initialiser la Base de données
+    database.InitDB()
 
-	for i := 0; i < 5; i++ {
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		if err == nil {
-			break
-		}
-		fmt.Println("Attente de la base de données...")
-		time.Sleep(2 * time.Second)
-	}
+    //Configurer le Router
+    r := router.SetupRoutes()
 
-	if err != nil {
-		log.Fatal("Impossible de se connecter à la DB :", err)
-	}
+    //Lancer le serveur
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
 
-	database.DB = db
-
-	// Migrations automatiques
-	modelsToMigrate := []interface{}{
-		&models.User{},
-		&models.Post{},
-		&models.Comment{},
-		&models.Like{},
-		&models.Tag{},
-		&models.PostTag{},
-	}
-	err = db.AutoMigrate(modelsToMigrate...)
-	if err != nil {
-		log.Fatal("Erreur de migration :", err)
-	}
-	fmt.Println("Base de données prête et migrations terminées")
-
-	// On applique le middleware CORS sur nos routes API
-	corsMiddleware := middleware.CORS()
-
-	http.Handle("/api/register", corsMiddleware(http.HandlerFunc(handlers.Register)))
-	http.Handle("/api/login", corsMiddleware(http.HandlerFunc(handlers.Login)))
-	http.HandleFunc("/login", middleware.CaptchaMiddleware(handlers.Login))
-	http.HandleFunc("/confirm-reset-password", confirmResetPassword)
-	http.HandleFunc("/reset-password", resetPassword)
-	http.Handle("/api/refresh-token", corsMiddleware(http.HandlerFunc(handlers.RefreshToken)))
-	//Serveur de fichiers statiques
-	fileServer := http.FileServer(http.Dir("./public"))
-	http.Handle("/", fileServer)
-
-	// Lancement du serveur
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	fmt.Printf("Serveur Forum Warframe lancé sur http://localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
-}
-
-	type CaptchaResponse struct {
-	Success bool `json:"success"`
-}
-//Fonction de vérification du captcha
-func VerifyCaptcha(token string) (bool, error) {
-	resp, err := http.PostForm(
-		"https://www.google.com/recaptcha/api/siteverify",
-		url.Values{
-			"secret":   {os.Getenv("ECRET_CAPTCHA_KEY")},
-			"response": {token},
-		},
-	)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-
-	var result CaptchaResponse
-	json.NewDecoder(resp.Body).Decode(&result)
-
-	return result.Success, nil
-}
-
-func confirmResetPassword(w http.ResponseWriter, r *http.Request) {
-	handlers.ConfirmResetPassword(w, r)
-}
-
-func resetPassword(w http.ResponseWriter, r *http.Request) {
-	handlers.ResetPassword(w, r)
+    log.Printf("Server started on http://localhost:%s", port)
+    log.Fatal(http.ListenAndServe(":"+port, r))
 }
