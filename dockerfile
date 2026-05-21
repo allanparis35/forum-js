@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Compilation
-RUN go build -o main ./api/main.go
+RUN go build -o main ./main.go
 
 EXPOSE 8080
 
