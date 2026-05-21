@@ -16,7 +16,7 @@ CREATE TABLE posts (
     title VARCHAR(255) NOT NULL,
     content_post TEXT NOT NULL,
     image_url VARCHAR(255),
-    user_id INTEGER REFERENCES user(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -24,7 +24,7 @@ CREATE TABLE posts (
 CREATE TABLE comments (
     id SERIAL PRIMARY KEY,
     content TEXT NOT NULL,
-    user_id INTEGER REFERENCES user(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
     status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -32,7 +32,7 @@ CREATE TABLE comments (
 
 CREATE TABLE likes (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES user(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
     is_like BOOLEAN NOT NULL, 
     UNIQUE(user_id, post_id) -- Empêche un utilisateur de liker plusieurs fois le même post
@@ -51,7 +51,7 @@ CREATE TABLE post_tags (
 
 CREATE TABLE user_tokens (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES user(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     token TEXT NOT NULL,
     type VARCHAR(20) NOT NULL, -- "access" ou "refresh"
     expires_at TIMESTAMP NOT NULL
