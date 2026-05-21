@@ -43,7 +43,7 @@ func JWT(next http.Handler) http.Handler {
 
 		// Ajouter user_id et role dans le contexte
 		ctx := context.WithValue(r.Context(), "user_id", int(claims["user_id"].(float64)))
-		ctx = context.WithValue(ctx, "role", claims["role"].(string))
+		ctx = context.WithValue(ctx, "role", claims["role"].(bool))
 
 		// Passe au handler suivant
 		next.ServeHTTP(w, r.WithContext(ctx))
