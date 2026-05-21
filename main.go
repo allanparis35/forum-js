@@ -20,6 +20,7 @@ func main() {
 
     //Configurer le Router
     r := router.SetupRoutes()
+    r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
     //Lancer le serveur
     port := os.Getenv("PORT")
