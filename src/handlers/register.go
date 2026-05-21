@@ -17,7 +17,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
     }
 
     hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-    user := models.User{Email: req.Email, Password: string(hash)}
+    user := models.User{Email: req.Email, Username: req.Username, Password: string(hash)}
     
     result := database.DB.Create(&user)
     if result.Error != nil {
