@@ -33,6 +33,8 @@ func InitDB() {
 		&models.UserToken{},
 		&models.Post{}, 
 		&models.Comment{},
+		&models.Like{},
+		&models.Tag{},
 	)
 	
 	if err != nil {
