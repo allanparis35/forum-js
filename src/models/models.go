@@ -5,14 +5,17 @@ import (
 )
 
 type User struct {
-	ID           uint      `gorm:"primaryKey"`
-	Username     string    `gorm:"type:varchar(20);not null"`
-	Email        string    `gorm:"type:varchar(255);not null;unique"`
-	Password     string    `gorm:"type:varchar(60);not null"`
-	RefreshToken string    `gorm:"type:text"`
-	IsAdmin      bool      `gorm:"default:false"`
-	IsOnline     bool      `gorm:"default:false"`
-	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	ID           		uint      `gorm:"primaryKey"`
+	Username     		string    `gorm:"type:varchar(20);not null"`
+	Email        		string    `gorm:"type:varchar(255);not null;unique"`
+	Password     		string    `gorm:"type:varchar(60);not null"`
+	RefreshToken 		string    `gorm:"type:text"`
+	IsAdmin      		bool      `gorm:"default:false"`
+	IsOnline     		bool      `gorm:"default:false"`
+	CreatedAt    		time.Time `gorm:"autoCreateTime"`
+	TwoFactorCode       string    `gorm:"size:6"`
+	TwoFactorExpiresAt  time.Time `gorm:"default:null"`
+	IsActive       		bool      `gorm:"default:false"`
 }
 
 type Post struct {

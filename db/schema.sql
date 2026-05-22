@@ -8,7 +8,10 @@ CREATE TABLE users (
     refresh_token TEXT DEFAULT NULL,
     is_admin BOOLEAN DEFAULT FALSE,
     is_online BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    two_factor_code VARCHAR(6) DEFAULT NULL,
+    two_factor_expires_at TIMESTAMP DEFAULT NULL,
+    is_active BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE posts (
