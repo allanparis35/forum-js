@@ -14,7 +14,8 @@ func SendResetEmail(toEmail string, token string) error {
 	port := os.Getenv("MAILER_PORT")
 
 	//Construction de l'URL que l'utilisateur cliquera dans son mail 
-	resetLink := fmt.Sprintf("http://localhost:5173/reset-password?token=%s", token)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", frontendURL, token)
 
 	//Création du mail
 	subject := "Subject: Reinitialisation de votre mot de passe\n"
