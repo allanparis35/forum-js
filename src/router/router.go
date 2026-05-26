@@ -23,4 +23,4 @@ func SetupRoutes() *mux.Router {
     r.HandleFunc("/api/confirm-reset", handlers.ConfirmResetPassword).Methods("POST")
 
     return r
-}
+} 

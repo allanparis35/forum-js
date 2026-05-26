@@ -18,7 +18,8 @@ import (
 func generate2FACode() string {
 	b := make([]byte, 3)
 	_, _ = rand.Read(b)
-	return fmt.Sprintf("%06d", int(b[0])%900000+100000)
+	val := int(b[0])<<16 | int(b[1])<<8 | int(b[2])
+	return fmt.Sprintf("%06d", val%1000000)
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
