@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum - Connexion / Inscription</title>
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Dynamic Animated Mesh Background -->
+    <div class="mesh-background"></div>
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+
+    <!-- Main Container -->
+    <main class="auth-container">
+        <!-- Brand/Logo Section -->
+        <header class="auth-header">
+            <div class="logo-icon">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <h1>Forum</h1>
+            <p>Connectez-vous pour rejoindre la communauté</p>
+        </header>
+
+        <!-- Auth Card -->
+        <div class="auth-card" id="authCard">
+            <!-- Tabs Navigation -->
+            <div class="auth-tabs" id="authTabs">
+                <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">
+                    Connexion
+                </button>
+                <button type="button" class="tab-btn" id="registerTabBtn" onclick="switchTab('register')">
+                    Inscription
+                </button>
+                <div class="tab-indicator" id="tabIndicator"></div>
+            </div>
+
+            <!-- Form Wrapper -->
+            <div class="form-wrapper">
+                <!-- LOGIN FORM -->
+                <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label for="loginEmail">Adresse E-mail</label>
+                        <div class="input-field">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="loginEmail" placeholder="nom@exemple.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-wrapper">
+                            <label for="loginPassword">Mot de passe</label>
+                            <button type="button" class="text-link-btn" onclick="showScreen('forgotPassword')">Mot de passe oublié ?</button>
+                        </div>
+                        <div class="input-field">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkmark"></span>
+                            Se souvenir de moi
+                        </label>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="loginSubmitBtn">
+                        <span>Se connecter</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+
+                <!-- REGISTER FORM -->
+                <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label for="registerUsername">Nom d'utilisateur</label>
+                        <div class="input-field">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="registerUsername" placeholder="Votre pseudo" required minlength="3" maxlength="20" autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="registerEmail">Adresse E-mail</label>
+                        <div class="input-field">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="registerEmail" placeholder="nom@exemple.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="registerPassword">Mot de passe</label>
+                        <div class="input-field">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="registerPassword" placeholder="••••••••" required minlength="8" autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerPassword', this)">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                        <!-- Password Strength Indicator -->
+                        <div class="strength-bar-container">
+                            <div class="strength-bar" id="strengthBar"></div>
+                        </div>
+                        <span class="strength-text" id="strengthText">Saisissez un mot de passe</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="registerConfirmPassword">Confirmer le mot de passe</label>
+                        <div class="input-field">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="registerConfirmPassword" placeholder="••••••••" required autocomplete="new-password">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerConfirmPassword', this)">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="registerSubmitBtn">
+                        <span>Créer un compte</span>
+                        <i class="fa-solid fa-user-plus"></i>
+                    </button>
+                </form>
+
+                <!-- FORGOT PASSWORD SCREEN (Hidden by default) -->
+                <div id="forgotPasswordScreen" class="auth-screen">
+                    <button type="button" class="back-btn" onclick="showScreen('auth')">
+                        <i class="fa-solid fa-arrow-left"></i> Retour
+                    </button>
+                    <h2>Mot de passe oublié</h2>
+                    <p class="screen-desc">Saisissez votre e-mail pour recevoir un lien de réinitialisation.</p>
+
+                    <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
+                        <div class="input-group">
+                            <label for="forgotEmail">Adresse E-mail</label>
+                            <div class="input-field">
+                                <i class="fa-regular fa-envelope"></i>
+                                <input type="email" id="forgotEmail" placeholder="nom@exemple.com" required autocomplete="email">
+                            </div>
+                        </div>
+                        <button type="submit" class="submit-btn" id="forgotSubmitBtn">
+                            <span>Envoyer le lien</span>
+                            <i class="fa-regular fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- CONFIRM PASSWORD RESET SCREEN (Hidden by default) -->
+                <div id="confirmResetScreen" class="auth-screen">
+                    <button type="button" class="back-btn" onclick="showScreen('auth')">
+                        <i class="fa-solid fa-arrow-left"></i> Retour
+                    </button>
+                    <h2>Réinitialisation</h2>
+                    <p class="screen-desc">Définissez votre nouveau mot de passe sécurisé.</p>
+
+                    <form id="confirmResetForm" onsubmit="handleConfirmReset(event)">
+                        <div class="input-group">
+                            <label for="resetToken">Token de réinitialisation</label>
+                            <div class="input-field">
+                                <i class="fa-solid fa-key"></i>
+                                <input type="text" id="resetToken" placeholder="Collez le token reçu par mail" required>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="resetPassword">Nouveau mot de passe</label>
+                            <div class="input-field">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" id="resetPassword" placeholder="••••••••" required minlength="8">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('resetPassword', this)">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="resetConfirmPassword">Confirmer le mot de passe</label>
+                            <div class="input-field">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" id="resetConfirmPassword" placeholder="••••••••" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('resetConfirmPassword', this)">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="resetSubmitBtn">
+                            <span>Mettre à jour le mot de passe</span>
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 2FA CODE SCREEN (Hidden by default) -->
+                <div id="twoFactorScreen" class="auth-screen">
+                    <div class="success-check-anim">
+                        <div class="circle-check">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                        </div>
+                    </div>
+                    <h2>Double facteur (2FA)</h2>
+                    <p class="screen-desc">Entrez le code de vérification à 6 chiffres envoyé à <strong id="twoFactorEmailPlaceholder">votre adresse mail</strong>.</p>
+
+                    <form id="twoFactorForm" onsubmit="handleTwoFactor(event)">
+                        <div class="code-inputs-container">
+                            <input type="text" maxlength="1" class="code-input" required pattern="[0-9]">
+                            <input type="text" maxlength="1" class="code-input" required pattern="[0-9]">
+                            <input type="text" maxlength="1" class="code-input" required pattern="[0-9]">
+                            <input type="text" maxlength="1" class="code-input" required pattern="[0-9]">
+                            <input type="text" maxlength="1" class="code-input" required pattern="[0-9]">
+                            <input type="text" maxlength="1" class="code-input" required pattern="[0-9]">
+                        </div>
+                        <input type="hidden" id="twoFactorFullCode">
+
+                        <button type="submit" class="submit-btn" id="twoFactorSubmitBtn">
+                            <span>Vérifier mon compte</span>
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Main JavaScript File -->
+    <script src="app.js"></script>
+</body>
+</html>
