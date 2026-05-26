@@ -21,7 +21,7 @@ type User struct {
 type Post struct {
 	ID        uint      `gorm:"primaryKey"`
 	Title     string    `gorm:"type:varchar(255);not null"`
-	Content   string    `gorm:"type:text;not null"`
+	Content   string    `gorm:"column:content_post;type:text;not null"`
 	ImageUrl  string    `gorm:"type:varchar(255)"`
 	UserID    uint      `gorm:"not null"`
 	Status    string    `gorm:"type:varchar(20);default:'pending'"`
