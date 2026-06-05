@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentification - Forum Warframe</title>
+  <link rel="stylesheet" href="assets/auth.css">
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="brand-panel" aria-label="Presentation du forum">
+      <a class="brand-logo" href="index.html" aria-label="Retour a l'accueil">
+        <span class="brand-mark">WF</span>
+        <span>Forum Warframe</span>
+      </a>
+
+      <div class="brand-copy">
+        <p class="eyebrow">Forum communautaire</p>
+        <h1>Bienvenue sur le Forum Officiel Warframe</h1>
+        <p>
+          Pose tes questions, trie les sujets par tags et retrouve plus vite les reponses utiles
+          sur le farm, les builds, les quetes, les boss et les Warframes.
+        </p>
+      </div>
+
+      <div class="feature-grid" aria-label="Points forts">
+        <article>
+          <strong>Tags requis</strong>
+          <span>Au moins deux themes par question pour une recherche plus precise.</span>
+        </article>
+        <article>
+          <strong>IA integrée</strong>
+          <span>Aide a la redaction, recherche naturelle et moderation assistee.</span>
+        </article>
+        <article>
+          <strong>Navigation lisible</strong>
+          <span>Accueil, populaire, recent, favoris et themes accessibles immediatement.</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="auth-panel" aria-label="Authentification">
+      <div class="panel-header">
+        <p class="eyebrow">Acces Tenno</p>
+        <h2 id="panel-title">Connexion</h2>
+        <p id="panel-description">Connecte-toi pour publier, sauvegarder et repondre aux questions.</p>
+      </div>
+
+      <div class="mode-tabs" role="tablist" aria-label="Choisir une action">
+        <button class="mode-tab active" type="button" data-mode="login" role="tab" aria-selected="true">Connexion</button>
+        <button class="mode-tab" type="button" data-mode="register" role="tab" aria-selected="false">Inscription</button>
+        <button class="mode-tab" type="button" data-mode="forgot" role="tab" aria-selected="false">Mot de passe</button>
+      </div>
+
+      <div class="alert" id="auth-alert" hidden></div>
+
+      <form class="auth-form active" id="login-form" data-form="login">
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" placeholder="tenno@mail.com" required>
+        </label>
+        <label>
+          Mot de passe
+          <input type="password" name="password" autocomplete="current-password" placeholder="8 caracteres minimum" required>
+        </label>
+        <div class="captcha-box">
+          <input type="hidden" name="captcha" required>
+          <div id="login-captcha" class="captcha-widget"></div>
+          <p class="captcha-help">Protection anti-bot requise pour se connecter.</p>
+        </div>
+        <button class="primary-action" type="submit">Se connecter</button>
+      </form>
+
+      <form class="auth-form" id="register-form" data-form="register">
+        <label>
+          Nom utilisateur
+          <input type="text" name="username" autocomplete="username" maxlength="20" placeholder="LotusPrime" required>
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" placeholder="tenno@mail.com" required>
+        </label>
+        <label>
+          Mot de passe
+          <input type="password" name="password" autocomplete="new-password" minlength="8" placeholder="8 caracteres minimum" required>
+        </label>
+        <button class="primary-action" type="submit">Creer mon compte</button>
+      </form>
+
+      <form class="auth-form" id="verify-form" data-form="verify">
+        <div class="form-note">
+          Un code de verification est envoye apres inscription. Saisis-le ici pour activer le compte.
+        </div>
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" placeholder="tenno@mail.com" required>
+        </label>
+        <label>
+          Code
+          <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="123456" required>
+        </label>
+        <button class="primary-action" type="submit">Verifier mon compte</button>
+      </form>
+
+      <form class="auth-form" id="forgot-form" data-form="forgot">
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" placeholder="tenno@mail.com" required>
+        </label>
+        <button class="primary-action" type="submit">Recevoir un lien</button>
+      </form>
+
+      <form class="auth-form" id="reset-form" data-form="reset">
+        <div class="form-note">
+          Utilise ce formulaire apres avoir ouvert le lien de reinitialisation recu par email.
+        </div>
+        <label>
+          Token
+          <input type="text" name="token" autocomplete="off" placeholder="Token de reinitialisation" required>
+        </label>
+        <label>
+          Nouveau mot de passe
+          <input type="password" name="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>
+          Confirmer le mot de passe
+          <input type="password" name="confirm_password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button class="primary-action" type="submit">Changer le mot de passe</button>
+      </form>
+
+      <div class="panel-footer">
+        <button class="link-button" type="button" data-mode="verify">Verifier un compte</button>
+        <button class="link-button" type="button" data-mode="reset">Reinitialiser avec un token</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/auth-config.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit" async defer></script>
+</body>
+</html>

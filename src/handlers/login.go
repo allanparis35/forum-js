@@ -33,6 +33,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    if !user.IsActive {
+    http.Error(w, "compte non activé", http.StatusForbidden)
+    return
+    }
+
     refreshToken := generateRandomString(32)
     user.RefreshToken = refreshToken
     database.DB.Save(&user) // Sauvegarde en DB

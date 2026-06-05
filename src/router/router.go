@@ -17,7 +17,7 @@ func SetupRoutes() *mux.Router {
 
     r.HandleFunc("/api/register", handlers.Register).Methods("POST")
     r.HandleFunc("/api/verify-register", handlers.VerifyRegister).Methods("GET")
-    r.HandleFunc("/api/login", handlers.Login).Methods("POST")
+    r.HandleFunc("/api/login", middleware.CaptchaMiddleware(handlers.Login)).Methods("POST")
     r.HandleFunc("/api/refresh", handlers.RefreshToken).Methods("POST")
 
     apiSecured := r.PathPrefix("/api/auth").Subrouter()
