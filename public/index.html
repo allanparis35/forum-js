@@ -1,11 +1,433 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Forum Warframe</title>
+  <link rel="stylesheet" href="assets/index.css">
+
 </head>
 <body>
-  <span>Page d'accueil</span>
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html" aria-label="Accueil Forum Warframe">
+        <span class="brand-mark">WF</span>
+        <span class="brand-text">
+          Forum Warframe
+          <span>Tenno knowledge base</span>
+        </span>
+      </a>
+
+      <form class="global-search" role="search" data-search-form>
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="search" name="q" placeholder="Rechercher une question, un build, une ressource..." data-search-input>
+      </form>
+
+      <nav class="header-actions" aria-label="Actions utilisateur">
+        <a class="header-link" href="auth.html?mode=login">Connexion</a>
+        <a class="primary-link" href="auth.html?mode=register">Inscription</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="left-sidebar" aria-label="Navigation principale">
+      <section class="panel">
+        <div class="panel-title">Navigation</div>
+        <nav class="nav-list">
+          <button class="nav-item active" type="button" data-feed-filter="home">
+            <span class="nav-icon">⌂</span>
+            Accueil
+          </button>
+          <button class="nav-item" type="button" data-feed-filter="community">
+            <span class="nav-icon">◌</span>
+            Communaute
+          </button>
+          <button class="nav-item" type="button" data-feed-filter="popular">
+            <span class="nav-icon">▲</span>
+            Populaire
+            <span class="badge" data-popular-count>24</span>
+          </button>
+          <button class="nav-item" type="button" data-feed-filter="recent">
+            <span class="nav-icon">◷</span>
+            Recent
+          </button>
+          <button class="nav-item" type="button" data-feed-filter="subscriptions">
+            <span class="nav-icon">☆</span>
+            Mes abonnements
+          </button>
+        </nav>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Themes</div>
+        <div class="theme-list" data-tag-list>
+          <button class="theme-item active" type="button" data-tag="all">
+            <span class="theme-dot"></span>
+            Tous les themes
+          </button>
+          <button class="theme-item" type="button" data-tag="farm">
+            <span class="theme-dot"></span>
+            Farm
+            <span class="badge">128</span>
+          </button>
+          <button class="theme-item" type="button" data-tag="build">
+            <span class="theme-dot"></span>
+            Build
+            <span class="badge">94</span>
+          </button>
+          <button class="theme-item" type="button" data-tag="warframe">
+            <span class="theme-dot"></span>
+            Warframe
+            <span class="badge">83</span>
+          </button>
+          <button class="theme-item" type="button" data-tag="quest">
+            <span class="theme-dot"></span>
+            Quete
+            <span class="badge">51</span>
+          </button>
+          <button class="theme-item" type="button" data-tag="boss">
+            <span class="theme-dot"></span>
+            Boss
+            <span class="badge">39</span>
+          </button>
+          <button class="theme-item" type="button" data-tag="enemy">
+            <span class="theme-dot"></span>
+            Ennemi
+            <span class="badge">34</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Mon espace</div>
+        <nav class="nav-list">
+          <button class="nav-item" type="button" data-auth-required="true">
+            <span class="nav-icon">□</span>
+            Mes posts
+          </button>
+          <button class="nav-item" type="button" data-auth-required="true">
+            <span class="nav-icon">♡</span>
+            Favoris
+          </button>
+        </nav>
+      </section>
+
+      <section class="create-card">
+        <strong>Une question precise ?</strong>
+        <p>Chaque publication demandera au moins deux tags pour garder le forum facile a filtrer.</p>
+        <a href="#" data-auth-required="true">Creer un post</a>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="feed-header">
+        <div class="feed-title">
+          <h1>Questions populaires</h1>
+          <p data-feed-subtitle>Les discussions les plus utiles pour progresser plus vite dans Warframe.</p>
+        </div>
+        <button class="ai-button" type="button" data-ai-search>Demander a l'IA</button>
+      </header>
+
+      <section class="filter-bar" aria-label="Filtres du fil">
+        <div class="tabs" role="tablist">
+          <button class="tab active" type="button" data-sort="popular">Populaire</button>
+          <button class="tab" type="button" data-sort="recent">Recent</button>
+          <button class="tab" type="button" data-sort="unanswered">Sans reponse</button>
+          <button class="tab" type="button" data-sort="saved">Sauvegarde</button>
+        </div>
+        <select class="sort-select" aria-label="Tri secondaire" data-secondary-sort>
+          <option value="week">Cette semaine</option>
+          <option value="month">Ce mois</option>
+          <option value="all">Tout</option>
+        </select>
+      </section>
+
+      <section class="compose-brief" data-auth-required="true">
+        <div class="avatar online">TN</div>
+        <a class="compose-input" href="#">Poser une question avec au moins deux tags...</a>
+      </section>
+
+      <section class="post-list" data-post-list data-source="/api/posts?sort=popular">
+        <article class="post-card" data-post-id="101" data-tags="farm,resource,beginner">
+          <div class="vote-col">
+            <button class="vote-button" type="button" data-vote="up" aria-label="Like">▲</button>
+            <span class="vote-count" data-like-count>128</span>
+            <button class="vote-button" type="button" data-vote="down" aria-label="Dislike">▼</button>
+          </div>
+
+          <div class="post-main">
+            <div class="post-meta">
+              <span class="author">LotusPrime</span>
+              <span>·</span>
+              <time datetime="2026-06-09T08:40:00">il y a 18 min</time>
+              <span class="status-pill">resolu</span>
+            </div>
+            <h2 class="post-title">Quelle est la route la plus rentable pour farmer les Neurodes ?</h2>
+            <p class="post-excerpt">
+              Je cherche une methode stable pour recuperer des Neurodes sans perdre trop de temps.
+              Terre, Lua ou Deimos : quelle planete donne les meilleurs resultats actuellement ?
+            </p>
+            <div class="tags">
+              <span class="tag">#farm</span>
+              <span class="tag">#ressource</span>
+              <span class="tag">#debutant</span>
+            </div>
+            <div class="post-actions">
+              <button type="button" data-action="reply">Reply</button>
+              <button type="button" data-action="favorite">Favoris</button>
+              <span>2.1k vues</span>
+            </div>
+          </div>
+
+          <aside class="post-side">
+            <div class="reply-count">
+              <strong>34</strong>
+              <span>reponses</span>
+            </div>
+            <div class="last-activity">Derniere activite<br>3 min</div>
+          </aside>
+        </article>
+
+        <article class="post-card" data-post-id="102" data-tags="build,warframe,steelpath">
+          <div class="vote-col">
+            <button class="vote-button" type="button" data-vote="up" aria-label="Like">▲</button>
+            <span class="vote-count" data-like-count>96</span>
+            <button class="vote-button" type="button" data-vote="down" aria-label="Dislike">▼</button>
+          </div>
+
+          <div class="post-main">
+            <div class="post-meta">
+              <span class="author">TennoBuild</span>
+              <span>·</span>
+              <time datetime="2026-06-09T07:58:00">il y a 1 h</time>
+            </div>
+            <h2 class="post-title">Build Mesa Prime viable en Steel Path contre les ennemis blindes ?</h2>
+            <p class="post-excerpt">
+              Je veux optimiser Mesa Prime pour du contenu haut niveau. Quels mods sont indispensables,
+              et est-ce qu'un build oriente puissance suffit encore ?
+            </p>
+            <div class="tags">
+              <span class="tag">#build</span>
+              <span class="tag">#warframe</span>
+              <span class="tag">#steelpath</span>
+            </div>
+            <div class="post-actions">
+              <button type="button" data-action="reply">Reply</button>
+              <button type="button" data-action="favorite">Favoris</button>
+              <span>1.4k vues</span>
+            </div>
+          </div>
+
+          <aside class="post-side">
+            <div class="reply-count">
+              <strong>21</strong>
+              <span>reponses</span>
+            </div>
+            <div class="last-activity">Derniere activite<br>11 min</div>
+          </aside>
+        </article>
+
+        <article class="post-card" data-post-id="103" data-tags="quest,boss,story">
+          <div class="vote-col">
+            <button class="vote-button" type="button" data-vote="up" aria-label="Like">▲</button>
+            <span class="vote-count" data-like-count>74</span>
+            <button class="vote-button" type="button" data-vote="down" aria-label="Dislike">▼</button>
+          </div>
+
+          <div class="post-main">
+            <div class="post-meta">
+              <span class="author">VoidRunner</span>
+              <span>·</span>
+              <time datetime="2026-06-09T06:30:00">il y a 2 h</time>
+            </div>
+            <h2 class="post-title">Dans quel ordre faire les quetes principales pour eviter les spoilers ?</h2>
+            <p class="post-excerpt">
+              J'ai repris le jeu apres plusieurs annees et je ne sais plus quelles quetes lancer.
+              Je cherche un ordre clair pour suivre l'histoire sans me perdre.
+            </p>
+            <div class="tags">
+              <span class="tag">#quete</span>
+              <span class="tag">#lore</span>
+              <span class="tag">#debutant</span>
+            </div>
+            <div class="post-actions">
+              <button type="button" data-action="reply">Reply</button>
+              <button type="button" data-action="favorite">Favoris</button>
+              <span>980 vues</span>
+            </div>
+          </div>
+
+          <aside class="post-side">
+            <div class="reply-count">
+              <strong>17</strong>
+              <span>reponses</span>
+            </div>
+            <div class="last-activity">Derniere activite<br>22 min</div>
+          </aside>
+        </article>
+      </section>
+
+      <div class="empty-state" data-empty-state>
+        Aucun resultat pour ce filtre. Les donnees dynamiques pourront afficher cet etat automatiquement.
+      </div>
+
+      <button class="load-more" type="button" data-load-more>Charger plus de questions</button>
+    </main>
+
+    <aside class="right-sidebar" aria-label="Informations communautaires">
+      <section class="panel" data-widget="community">
+        <div class="panel-title">Communaute</div>
+        <div class="stats-grid">
+          <div class="stat">
+            <strong data-stat="members">12.4k</strong>
+            <span>membres</span>
+          </div>
+          <div class="stat">
+            <strong data-stat="online">248</strong>
+            <span>en ligne</span>
+          </div>
+          <div class="stat">
+            <strong data-stat="messages">84k</strong>
+            <span>messages</span>
+          </div>
+          <div class="stat">
+            <strong data-stat="monthly_posts">932</strong>
+            <span>posts ce mois</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-widget="trending">
+        <div class="panel-title">En ce moment</div>
+        <div class="compact-list" data-trending-list>
+          <a class="compact-item" href="#">
+            <strong>Farm rapide des Reliques Lith</strong>
+            <span>18 reponses recentes</span>
+          </a>
+          <a class="compact-item" href="#">
+            <strong>Boss le plus rentable cette semaine</strong>
+            <span>9 personnes lisent</span>
+          </a>
+          <a class="compact-item" href="#">
+            <strong>Build Wisp Prime support</strong>
+            <span>mis a jour il y a 12 min</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="panel" data-widget="top-members">
+        <div class="panel-title">Top membre du mois</div>
+        <div data-top-members>
+          <div class="member-row">
+            <span class="rank">1</span>
+            <div>
+              <div class="member-name">LotusPrime</div>
+              <div class="member-role">Expert farm</div>
+            </div>
+            <span class="score">2840</span>
+          </div>
+          <div class="member-row">
+            <span class="rank">2</span>
+            <div>
+              <div class="member-name">VoidRunner</div>
+              <div class="member-role">Guide lore</div>
+            </div>
+            <span class="score">2310</span>
+          </div>
+          <div class="member-row">
+            <span class="rank">3</span>
+            <div>
+              <div class="member-name">TennoBuild</div>
+              <div class="member-role">Build maker</div>
+            </div>
+            <span class="score">1980</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-widget="tags">
+        <div class="panel-title">Tags tendance</div>
+        <div class="tag-cloud" data-trending-tags>
+          <a class="tag" href="#">#farm</a>
+          <a class="tag" href="#">#build</a>
+          <a class="tag" href="#">#warframe</a>
+          <a class="tag" href="#">#boss</a>
+          <a class="tag" href="#">#quete</a>
+          <a class="tag" href="#">#steelpath</a>
+          <a class="tag" href="#">#ressource</a>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <template id="post-card-template">
+    <article class="post-card" data-post-id="">
+      <div class="vote-col">
+        <button class="vote-button" type="button" data-vote="up" aria-label="Like">▲</button>
+        <span class="vote-count" data-like-count></span>
+        <button class="vote-button" type="button" data-vote="down" aria-label="Dislike">▼</button>
+      </div>
+      <div class="post-main">
+        <div class="post-meta">
+          <span class="author" data-author></span>
+          <span>·</span>
+          <time data-created-at></time>
+        </div>
+        <h2 class="post-title" data-title></h2>
+        <p class="post-excerpt" data-content></p>
+        <div class="tags" data-tags></div>
+        <div class="post-actions">
+          <button type="button" data-action="reply">Reply</button>
+          <button type="button" data-action="favorite">Favoris</button>
+          <span data-views></span>
+        </div>
+      </div>
+      <aside class="post-side">
+        <div class="reply-count">
+          <strong data-comments-count></strong>
+          <span>reponses</span>
+        </div>
+        <div class="last-activity" data-last-activity></div>
+      </aside>
+    </article>
+  </template>
+
+  <script>
+    const setActive = (items, activeItem) => {
+      items.forEach((item) => item.classList.toggle("active", item === activeItem));
+    };
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => setActive(document.querySelectorAll(".tab"), tab));
+    });
+
+    document.querySelectorAll(".nav-item").forEach((item) => {
+      item.addEventListener("click", () => setActive(document.querySelectorAll(".nav-item"), item));
+    });
+
+    document.querySelectorAll(".theme-item").forEach((item) => {
+      item.addEventListener("click", () => setActive(document.querySelectorAll(".theme-item"), item));
+    });
+
+    document.querySelectorAll("[data-vote]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const column = button.closest(".vote-col");
+        const count = column.querySelector("[data-like-count]");
+        const isActive = button.classList.contains("active");
+        const isUp = button.dataset.vote === "up";
+
+        column.querySelectorAll("[data-vote]").forEach((vote) => vote.classList.remove("active"));
+
+        if (!isActive) {
+          button.classList.add("active");
+          count.textContent = Number(count.textContent) + (isUp ? 1 : -1);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
