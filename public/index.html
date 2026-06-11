@@ -377,7 +377,9 @@
           <span>·</span>
           <time data-created-at></time>
         </div>
-        <h2 class="post-title" data-title></h2>
+        <h2 class="post-title">
+          <a href="#" data-title data-post-link></a>
+        </h2>
         <p class="post-excerpt" data-content></p>
         <div class="tags" data-tags></div>
         <div class="post-actions">
@@ -472,6 +474,7 @@
       card.dataset.postId = post.id;
       card.dataset.tags = tags.map((tag) => tag.name).join(",");
 
+      fragment.querySelector("[data-post-link]").href = `post.html?id=${post.id}`;
       fragment.querySelector("[data-author]").textContent = post.author || "Utilisateur";
       fragment.querySelector("[data-created-at]").dateTime = post.created_at;
       fragment.querySelector("[data-created-at]").textContent = formatDate(post.created_at);
@@ -594,9 +597,15 @@
 
     postList.addEventListener("click", (event) => {
       const voteButton = event.target.closest("[data-vote]");
+      const replyButton = event.target.closest("[data-action='reply']");
 
       if (voteButton) {
         voteForPost(voteButton);
+      }
+
+      if (replyButton) {
+        const card = replyButton.closest("[data-post-id]");
+        window.location.assign(`post.html?id=${card.dataset.postId}#comments`);
       }
     });
 
