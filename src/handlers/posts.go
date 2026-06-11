@@ -77,7 +77,7 @@ type postDetailResponse struct {
 // Liste des posts
 func ListPosts(w http.ResponseWriter, r *http.Request) {
 	var posts []models.Post
-	query := database.DB.Preload("User").Preload("Tags")
+	query := database.DB.Preload("Tags")
 
 	// Tri des posts
 	switch r.URL.Query().Get("sort") {
@@ -142,7 +142,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 	// Récupération du post
 	var post models.Post
 	// Vérification de l'existence du post
-	if err := database.DB.Preload("User").Preload("Tags").First(&post, postID).Error; err != nil {
+	if err := database.DB.Preload("Tags").First(&post, postID).Error; err != nil {
 		// Vérification si le post n'existe pas
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			writeError(w, http.StatusNotFound, "post introuvable")
@@ -156,7 +156,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 	// Récupération des commentaires
 	var comments []models.Comment
 	// Vérification si une erreur est survenue lors de la récupération des commentaires
-	if err := database.DB.Preload("User").Where("post_id = ?", post.ID).Order("created_at ASC").Find(&comments).Error; err != nil {
+	if err := database.DB.Where("post_id = ?", post.ID).Order("created_at ASC").Find(&comments).Error; err != nil {
 		// Vérification si une erreur est survenue lors de la récupération des commentaires
 		writeError(w, http.StatusInternalServerError, "erreur lors de la recuperation des commentaires")
 		return
@@ -168,7 +168,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 		commentResponses = append(commentResponses, commentResponse{
 			ID:        comment.ID,
 			Content:   comment.Content,
-			Author:    comment.User.Username,
+			Author:    getUserNameByID(comment.UserID),
 			UserID:    comment.UserID,
 			CreatedAt: comment.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		})
@@ -238,7 +238,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Vérification si une erreur est survenue lors de la récupération du post
-	if err := database.DB.Preload("User").Preload("Tags").First(&post, post.ID).Error; err != nil {
+	if err := database.DB.Preload("Tags").First(&post, post.ID).Error; err != nil {
 		// Vérification si une erreur est survenue lors de la récupération du post
 		writeError(w, http.StatusInternalServerError, "post cree mais impossible a relire")
 		return
@@ -308,7 +308,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Vérification si une erreur est survenue lors de la récupération du commentaire
-	if err := database.DB.Preload("User").First(&comment, comment.ID).Error; err != nil {
+	if err := database.DB.First(&comment, comment.ID).Error; err != nil {
 		writeError(w, http.StatusInternalServerError, "commentaire cree mais impossible a relire")
 		return
 	}
@@ -317,7 +317,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, commentResponse{
 		ID:        comment.ID,
 		Content:   comment.Content,
-		Author:    comment.User.Username,
+		Author:    getUserNameByID(comment.UserID),
 		UserID:    comment.UserID,
 		CreatedAt: comment.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	})
@@ -470,7 +470,7 @@ func buildPostResponse(post models.Post, userID int) postResponse {
 		Title:         post.Title,
 		Content:       post.Content,
 		ImageURL:      post.ImageUrl,
-		Author:        post.User.Username,
+		Author:        getUserNameByID(post.UserID),
 		UserID:        post.UserID,
 		Status:        post.Status,
 		CreatedAt:     post.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -546,6 +546,14 @@ func countVotes(postID uint) (int64, int64) {
 	database.DB.Model(&models.Like{}).Where("post_id = ? AND is_like = ?", postID, false).Count(&dislikes)
 
 	return likes, dislikes
+}
+
+func getUserNameByID(userID uint) string {
+	var user models.User
+	if err := database.DB.Select("username").First(&user, userID).Error; err != nil {
+		return "Utilisateur"
+	}
+	return user.Username
 }
 
 func isPostFavorite(userID uint, postID uint) bool {

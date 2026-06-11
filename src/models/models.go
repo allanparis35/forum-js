@@ -24,7 +24,6 @@ type Post struct {
 	Content   string    `gorm:"column:content_post;type:text;not null"`
 	ImageUrl  string    `gorm:"type:varchar(255)"`
 	UserID    uint      `gorm:"not null"`
-	User      User      `gorm:"foreignKey:UserID"`
 	Status    string    `gorm:"type:varchar(20);default:'pending'"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	Tags      []Tag     `gorm:"many2many:post_tags;"`
@@ -39,7 +38,6 @@ type Comment struct {
 	ID        uint      `gorm:"primaryKey"`
 	Content   string    `gorm:"type:text;not null"`
 	UserID    uint      `gorm:"not null"`
-	User      User      `gorm:"foreignKey:UserID"`
 	PostID    uint      `gorm:"not null"`
 	Status    string    `gorm:"type:varchar(20);default:'pending'"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
