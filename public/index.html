@@ -119,7 +119,7 @@
       <section class="create-card">
         <strong>Une question precise ?</strong>
         <p>Chaque publication demandera au moins deux tags pour garder le forum facile a filtrer.</p>
-        <a href="#" data-auth-required="true">Creer un post</a>
+        <a href="#" data-auth-required="true" data-create-post-trigger>Creer un post</a>
       </section>
     </aside>
 
@@ -146,9 +146,39 @@
         </select>
       </section>
 
-      <section class="compose-brief" data-auth-required="true">
+      <section class="compose-brief" data-auth-required="true" data-create-post-trigger>
         <div class="avatar online">TN</div>
         <a class="compose-input" href="#">Poser une question avec au moins deux tags...</a>
+      </section>
+
+      <section class="post-form-panel" data-post-form-panel hidden>
+        <form class="post-form" data-post-form>
+          <div class="form-row">
+            <label for="post-title">Titre</label>
+            <input id="post-title" name="title" type="text" minlength="5" maxlength="255" required placeholder="Ex: Comment farmer les Neurodes efficacement ?">
+          </div>
+
+          <div class="form-row">
+            <label for="post-content">Contenu</label>
+            <textarea id="post-content" name="content" minlength="20" required rows="6" placeholder="Explique ton probleme, ce que tu as deja essaye, et le contexte utile."></textarea>
+          </div>
+
+          <div class="form-row">
+            <label for="post-tags">Tags</label>
+            <input id="post-tags" name="tags" type="text" required placeholder="farm, ressource">
+            <span class="form-hint">Minimum 2 tags, maximum 5. Separe-les par des virgules.</span>
+          </div>
+
+          <div class="form-row">
+            <label for="post-image">Image optionnelle</label>
+            <input id="post-image" name="image_url" type="url" placeholder="https://...">
+          </div>
+
+          <div class="form-actions">
+            <button class="secondary-button" type="button" data-cancel-post>Annuler</button>
+            <button class="primary-button" type="submit">Publier</button>
+          </div>
+        </form>
       </section>
 
       <section class="post-list" data-post-list data-source="/api/posts?sort=popular">
@@ -409,6 +439,9 @@
     const searchForm = document.querySelector("[data-search-form]");
     const searchInput = document.querySelector("[data-search-input]");
     const loadMoreButton = document.querySelector("[data-load-more]");
+    const postFormPanel = document.querySelector("[data-post-form-panel]");
+    const postForm = document.querySelector("[data-post-form]");
+    const cancelPostButton = document.querySelector("[data-cancel-post]");
 
     const setActive = (items, activeItem) => {
       items.forEach((item) => item.classList.toggle("active", item === activeItem));
@@ -492,6 +525,20 @@
       emptyState.style.display = posts.length === 0 ? "block" : "none";
     };
 
+    const showPostForm = () => {
+      if (!requireAuth()) {
+        return;
+      }
+
+      postFormPanel.hidden = false;
+      postForm.querySelector("input[name='title']").focus();
+    };
+
+    const hidePostForm = () => {
+      postForm.reset();
+      postFormPanel.hidden = true;
+    };
+
     const loadPosts = async () => {
       postList.setAttribute("aria-busy", "true");
       emptyState.style.display = "none";
@@ -551,6 +598,59 @@
       }
     };
 
+    const parseTags = (value) => {
+      return value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+    };
+
+    const createPost = async (form) => {
+      if (!requireAuth()) {
+        return;
+      }
+
+      const submitButton = form.querySelector("button[type='submit']");
+      const formData = new FormData(form);
+      const payload = {
+        title: formData.get("title").trim(),
+        content: formData.get("content").trim(),
+        image_url: formData.get("image_url").trim(),
+        tags: parseTags(formData.get("tags"))
+      };
+
+      submitButton.disabled = true;
+      emptyState.style.display = "none";
+
+      try {
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${getAccessToken()}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Publication impossible.");
+        }
+
+        hidePostForm();
+        state.sort = "recent";
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.classList.toggle("active", tab.dataset.sort === "recent");
+        });
+        await loadPosts();
+      } catch (error) {
+        emptyState.textContent = error.message;
+        emptyState.style.display = "block";
+      } finally {
+        submitButton.disabled = false;
+      }
+    };
+
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => {
         if (tab.dataset.sort === "saved" && !requireAuth()) {
@@ -590,6 +690,20 @@
       event.preventDefault();
       state.query = searchInput.value.trim();
       loadPosts();
+    });
+
+    document.querySelectorAll("[data-create-post-trigger]").forEach((trigger) => {
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        showPostForm();
+      });
+    });
+
+    cancelPostButton.addEventListener("click", hidePostForm);
+
+    postForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      createPost(event.currentTarget);
     });
 
     postList.addEventListener("click", (event) => {

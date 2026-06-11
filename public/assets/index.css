@@ -184,7 +184,8 @@
 
   .panel,
   .post-card,
-  .compose-brief {
+  .compose-brief,
+  .post-form-panel {
     border: 1px solid var(--line);
     border-radius: 8px;
     background: rgba(26, 26, 26, 0.86);
@@ -415,6 +416,86 @@
     display: flex;
     align-items: center;
     padding: 0 14px;
+  }
+
+  .post-form-panel {
+    margin-bottom: 14px;
+    padding: 16px;
+  }
+
+  .post-form-panel[hidden] {
+    display: none;
+  }
+
+  .post-form {
+    display: grid;
+    gap: 14px;
+  }
+
+  .form-row {
+    display: grid;
+    gap: 7px;
+  }
+
+  .form-row label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 850;
+  }
+
+  .form-row input,
+  .form-row textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    padding: 11px 12px;
+    outline: none;
+    resize: vertical;
+  }
+
+  .form-row input:focus,
+  .form-row textarea:focus {
+    border-color: rgba(139, 185, 224, 0.72);
+    box-shadow: 0 0 0 3px rgba(78, 121, 163, 0.18);
+  }
+
+  .form-hint {
+    color: var(--hint);
+    font-size: 12px;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .primary-button,
+  .secondary-button {
+    min-height: 38px;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-weight: 850;
+  }
+
+  .primary-button {
+    border: 1px solid var(--blue);
+    background: var(--blue);
+    color: var(--text);
+  }
+
+  .secondary-button {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--muted);
+  }
+
+  .primary-button:disabled,
+  .secondary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
   }
 
   .post-list {
