@@ -1,14 +1,16 @@
 package handlers
 
 import (
+	"FORUM-js/database"
+	"FORUM-js/src/models"
+	"FORUM-js/src/utils"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/mail"
+	"strings"
 	"time"
-	"FORUM-js/database"
-	"FORUM-js/src/models"
-	"FORUM-js/src/utils"
 
 	"github.com/jackc/pgconn"
 	"golang.org/x/crypto/bcrypt"
@@ -22,6 +24,29 @@ func generate2FACode() string {
 	return fmt.Sprintf("%06d", val%1000000)
 }
 
+func validateRegisterRequest(req RegisterRequest) error {
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+	req.Username = strings.TrimSpace(req.Username)
+	req.Password = strings.TrimSpace(req.Password)
+
+	if req.Username == "" {
+		return fmt.Errorf("le nom d'utilisateur est requis")
+	}
+	if len(req.Username) > 20 {
+		return fmt.Errorf("le nom d'utilisateur ne peut pas dépasser 20 caractères")
+	}
+	if req.Email == "" {
+		return fmt.Errorf("l'email est requis")
+	}
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		return fmt.Errorf("l'email est invalide")
+	}
+	if len(req.Password) < 8 {
+		return fmt.Errorf("le mot de passe doit faire au moins 8 caractères")
+	}
+	return nil
+}
+
 func Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -29,19 +54,31 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	
+	if err := validateRegisterRequest(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+	req.Username = strings.TrimSpace(req.Username)
+	req.Password = strings.TrimSpace(req.Password)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "erreur lors du hachage du mot de passe", http.StatusInternalServerError)
+		return
+	}
+
 	twoFactorCode := generate2FACode()
 	expiration := time.Now().Add(15 * time.Minute)
 
-	
 	user := models.User{
 		Email:              req.Email,
 		Username:           req.Username,
 		Password:           string(hash),
-		TwoFactorCode:      twoFactorCode,     
-		TwoFactorExpiresAt: expiration,  
-		IsActive:           false,           
+		TwoFactorCode:      twoFactorCode,
+		TwoFactorExpiresAt: expiration,
+		IsActive:           false,
 	}
 
 	result := database.DB.Create(&user)
@@ -54,7 +91,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := utils.Send2FACodeEmail(user.Email, twoFactorCode)
+	err = utils.Send2FACodeEmail(user.Email, twoFactorCode)
 	if err != nil {
 		fmt.Println("Erreur d'envoi du mail 2FA:", err)
 	}
