@@ -397,37 +397,222 @@
   </template>
 
   <script>
+    const state = {
+      sort: "popular",
+      tag: "all",
+      query: ""
+    };
+
+    const postList = document.querySelector("[data-post-list]");
+    const postTemplate = document.querySelector("#post-card-template");
+    const emptyState = document.querySelector("[data-empty-state]");
+    const searchForm = document.querySelector("[data-search-form]");
+    const searchInput = document.querySelector("[data-search-input]");
+    const loadMoreButton = document.querySelector("[data-load-more]");
+
     const setActive = (items, activeItem) => {
       items.forEach((item) => item.classList.toggle("active", item === activeItem));
     };
 
+    const getAccessToken = () => localStorage.getItem("access_token");
+
+    const requireAuth = () => {
+      if (getAccessToken()) {
+        return true;
+      }
+
+      window.location.assign("auth.html?mode=login");
+      return false;
+    };
+
+    const buildPostsUrl = () => {
+      const params = new URLSearchParams();
+
+      params.set("sort", state.sort);
+
+      if (state.tag && state.tag !== "all") {
+        params.set("tag", state.tag);
+      }
+
+      if (state.query) {
+        params.set("q", state.query);
+      }
+
+      return `/api/posts?${params.toString()}`;
+    };
+
+    const formatDate = (value) => {
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "";
+      }
+
+      return new Intl.DateTimeFormat("fr-FR", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(date);
+    };
+
+    const createTagElement = (tag) => {
+      const item = document.createElement("span");
+      item.className = "tag";
+      item.textContent = `#${tag.name}`;
+      return item;
+    };
+
+    const renderPost = (post) => {
+      const fragment = postTemplate.content.cloneNode(true);
+      const card = fragment.querySelector(".post-card");
+      const tagsContainer = fragment.querySelector("[data-tags]");
+      const tags = Array.isArray(post.tags) ? post.tags : [];
+
+      card.dataset.postId = post.id;
+      card.dataset.tags = tags.map((tag) => tag.name).join(",");
+
+      fragment.querySelector("[data-author]").textContent = post.author || "Utilisateur";
+      fragment.querySelector("[data-created-at]").dateTime = post.created_at;
+      fragment.querySelector("[data-created-at]").textContent = formatDate(post.created_at);
+      fragment.querySelector("[data-title]").textContent = post.title;
+      fragment.querySelector("[data-content]").textContent = post.content;
+      fragment.querySelector("[data-like-count]").textContent = post.score;
+      fragment.querySelector("[data-comments-count]").textContent = post.comments_count;
+      fragment.querySelector("[data-last-activity]").textContent = "Derniere activite";
+      fragment.querySelector("[data-views]").textContent = `${post.likes_count} likes`;
+
+      tagsContainer.replaceChildren(...tags.map(createTagElement));
+
+      return fragment;
+    };
+
+    const renderPosts = (posts) => {
+      postList.replaceChildren(...posts.map(renderPost));
+      emptyState.style.display = posts.length === 0 ? "block" : "none";
+    };
+
+    const loadPosts = async () => {
+      postList.setAttribute("aria-busy", "true");
+      emptyState.style.display = "none";
+
+      try {
+        const response = await fetch(buildPostsUrl());
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.message || "Impossible de charger les posts.");
+        }
+
+        renderPosts(payload.posts || []);
+      } catch (error) {
+        postList.replaceChildren();
+        emptyState.textContent = error.message;
+        emptyState.style.display = "block";
+      } finally {
+        postList.setAttribute("aria-busy", "false");
+      }
+    };
+
+    const voteForPost = async (button) => {
+      if (!requireAuth()) {
+        return;
+      }
+
+      const card = button.closest("[data-post-id]");
+      const score = card.querySelector("[data-like-count]");
+      const isLike = button.dataset.vote === "up";
+
+      button.disabled = true;
+
+      try {
+        const response = await fetch(`/api/posts/${card.dataset.postId}/vote`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${getAccessToken()}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ is_like: isLike })
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.message || "Vote impossible.");
+        }
+
+        card.querySelectorAll("[data-vote]").forEach((vote) => vote.classList.remove("active"));
+        button.classList.add("active");
+        score.textContent = payload.score;
+      } catch (error) {
+        emptyState.textContent = error.message;
+        emptyState.style.display = "block";
+      } finally {
+        button.disabled = false;
+      }
+    };
+
     document.querySelectorAll(".tab").forEach((tab) => {
-      tab.addEventListener("click", () => setActive(document.querySelectorAll(".tab"), tab));
+      tab.addEventListener("click", () => {
+        if (tab.dataset.sort === "saved" && !requireAuth()) {
+          return;
+        }
+
+        state.sort = tab.dataset.sort === "saved" ? "popular" : tab.dataset.sort;
+        setActive(document.querySelectorAll(".tab"), tab);
+        loadPosts();
+      });
     });
 
     document.querySelectorAll(".nav-item").forEach((item) => {
-      item.addEventListener("click", () => setActive(document.querySelectorAll(".nav-item"), item));
+      item.addEventListener("click", () => {
+        if (item.dataset.authRequired === "true" && !requireAuth()) {
+          return;
+        }
+
+        if (item.dataset.feedFilter === "popular" || item.dataset.feedFilter === "recent") {
+          state.sort = item.dataset.feedFilter;
+          loadPosts();
+        }
+
+        setActive(document.querySelectorAll(".nav-item"), item);
+      });
     });
 
     document.querySelectorAll(".theme-item").forEach((item) => {
-      item.addEventListener("click", () => setActive(document.querySelectorAll(".theme-item"), item));
+      item.addEventListener("click", () => {
+        state.tag = item.dataset.tag || "all";
+        setActive(document.querySelectorAll(".theme-item"), item);
+        loadPosts();
+      });
     });
 
-    document.querySelectorAll("[data-vote]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const column = button.closest(".vote-col");
-        const count = column.querySelector("[data-like-count]");
-        const isActive = button.classList.contains("active");
-        const isUp = button.dataset.vote === "up";
+    searchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      state.query = searchInput.value.trim();
+      loadPosts();
+    });
 
-        column.querySelectorAll("[data-vote]").forEach((vote) => vote.classList.remove("active"));
+    postList.addEventListener("click", (event) => {
+      const voteButton = event.target.closest("[data-vote]");
 
-        if (!isActive) {
-          button.classList.add("active");
-          count.textContent = Number(count.textContent) + (isUp ? 1 : -1);
+      if (voteButton) {
+        voteForPost(voteButton);
+      }
+    });
+
+    document.querySelectorAll("[data-auth-required='true']").forEach((item) => {
+      item.addEventListener("click", (event) => {
+        if (!getAccessToken()) {
+          event.preventDefault();
+          requireAuth();
         }
       });
     });
+
+    loadMoreButton.disabled = true;
+    loadMoreButton.textContent = "Pagination a venir";
+
+    loadPosts();
   </script>
 </body>
 </html>
