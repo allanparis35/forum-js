@@ -52,6 +52,13 @@ type Like struct {
 	IsLike bool `gorm:"not null"`
 }
 
+type Favorite struct {
+	ID        uint      `gorm:"primaryKey"`
+	UserID    uint      `gorm:"not null;uniqueIndex:idx_user_post_favorite"`
+	PostID    uint      `gorm:"not null;uniqueIndex:idx_user_post_favorite"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+}
+
 type PostTag struct {
 	PostID uint `gorm:"primaryKey"`
 	TagID  uint `gorm:"primaryKey"`

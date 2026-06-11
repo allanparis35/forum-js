@@ -56,6 +56,7 @@ type postResponse struct {
 	DislikesCount int64         `json:"dislikes_count"`
 	CommentsCount int64         `json:"comments_count"`
 	Score         int64         `json:"score"`
+	IsFavorite    bool          `json:"is_favorite"`
 }
 
 // Réponse pour un commentaire
@@ -106,6 +107,8 @@ func ListPosts(w http.ResponseWriter, r *http.Request) {
 		query = query.Where("LOWER(title) LIKE ? OR LOWER(content_post) LIKE ?", like, like)
 	}
 
+	userID, _ := getUserIDFromContext(r)
+
 	// Récupération des posts
 	if err := query.Find(&posts).Error; err != nil {
 		// Vérification si une erreur est survenue lors de la récupération des posts
@@ -115,7 +118,7 @@ func ListPosts(w http.ResponseWriter, r *http.Request) {
 	// Construction des réponses
 	responses := make([]postResponse, 0, len(posts))
 	for _, post := range posts {
-		responses = append(responses, buildPostResponse(post))
+		responses = append(responses, buildPostResponse(post, userID))
 	}
 
 	// Tri des posts par popularité
@@ -171,9 +174,11 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	userID, _ := getUserIDFromContext(r)
+
 	// Envoi des réponses
 	writeJSON(w, http.StatusOK, postDetailResponse{
-		Post:     buildPostResponse(post),
+		Post:     buildPostResponse(post, userID),
 		Comments: commentResponses,
 	})
 }
@@ -240,7 +245,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Envoi de la réponse
-	writeJSON(w, http.StatusCreated, buildPostResponse(post))
+	writeJSON(w, http.StatusCreated, buildPostResponse(post, userID))
 }
 
 // Création d'un commentaire
@@ -379,6 +384,53 @@ func VotePost(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Toggle favorite d'un post
+func ToggleFavorite(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getAuthenticatedUserID(w, r)
+	if !ok {
+		return
+	}
+
+	postID, ok := parseIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+
+	var post models.Post
+	if err := database.DB.First(&post, postID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			writeError(w, http.StatusNotFound, "post introuvable")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "erreur lors de la verification du post")
+		return
+	}
+
+	var favorite models.Favorite
+	err := database.DB.Where("user_id = ? AND post_id = ?", userID, post.ID).First(&favorite).Error
+	if err == nil {
+		if err := database.DB.Delete(&favorite).Error; err != nil {
+			writeError(w, http.StatusInternalServerError, "erreur lors de la suppression du favori")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"is_favorite": false})
+		return
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		writeError(w, http.StatusInternalServerError, "erreur lors de la lecture du favori")
+		return
+	}
+
+	favorite = models.Favorite{UserID: uint(userID), PostID: post.ID}
+	if err := database.DB.Create(&favorite).Error; err != nil {
+		writeError(w, http.StatusInternalServerError, "erreur lors de l'ajout du favori")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"is_favorite": true})
+}
+
 // Liste des tags
 func ListTags(w http.ResponseWriter, r *http.Request) {
 	var tags []models.Tag
@@ -397,12 +449,16 @@ func ListTags(w http.ResponseWriter, r *http.Request) {
 }
 
 // Construction d'une réponse pour un post
-func buildPostResponse(post models.Post) postResponse {
+func buildPostResponse(post models.Post, userID int) postResponse {
 	// Récupération des likes et des dislikes
 	likes, dislikes := countVotes(post.ID)
 	// Récupération du nombre de commentaires
 	var commentsCount int64
 	database.DB.Model(&models.Comment{}).Where("post_id = ?", post.ID).Count(&commentsCount)
+	isFavorite := false
+	if userID > 0 {
+		isFavorite = isPostFavorite(uint(userID), post.ID)
+	}
 	// Construction des réponses des tags
 	tags := make([]tagResponse, 0, len(post.Tags))
 	for _, tag := range post.Tags {
@@ -423,6 +479,7 @@ func buildPostResponse(post models.Post) postResponse {
 		DislikesCount: dislikes,
 		CommentsCount: commentsCount,
 		Score:         likes - dislikes,
+		IsFavorite:    isFavorite,
 	}
 }
 
@@ -489,6 +546,20 @@ func countVotes(postID uint) (int64, int64) {
 	database.DB.Model(&models.Like{}).Where("post_id = ? AND is_like = ?", postID, false).Count(&dislikes)
 
 	return likes, dislikes
+}
+
+func isPostFavorite(userID uint, postID uint) bool {
+	var favorite models.Favorite
+	err := database.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&favorite).Error
+	return err == nil
+}
+
+func getUserIDFromContext(r *http.Request) (int, bool) {
+	userID, ok := r.Context().Value("user_id").(int)
+	if !ok || userID <= 0 {
+		return 0, false
+	}
+	return userID, true
 }
 
 // Parsing de l'ID d'un paramètre
