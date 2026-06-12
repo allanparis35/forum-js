@@ -11,6 +11,7 @@
 
 # Uploads d'utilisateurs
 /uploads/* 
+/public/uploads/*
 
 # IDE
 .vscode/

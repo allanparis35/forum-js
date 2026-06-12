@@ -27,6 +27,7 @@ func SetupRoutes() *mux.Router {
 	r.Handle("/api/posts/{id}/comments", middleware.JWTMiddleware(http.HandlerFunc(handlers.CreateComment))).Methods("POST")
 	r.Handle("/api/posts/{id}/vote", middleware.JWTMiddleware(http.HandlerFunc(handlers.VotePost))).Methods("POST")
 	r.Handle("/api/posts/{id}/favorite", middleware.JWTMiddleware(http.HandlerFunc(handlers.ToggleFavorite))).Methods("POST")
+	r.Handle("/api/uploads/images", middleware.JWTMiddleware(http.HandlerFunc(handlers.UploadPostImage))).Methods("POST")
 	r.HandleFunc("/api/tags", handlers.ListTags).Methods("GET")
 
 	return r

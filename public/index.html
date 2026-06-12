@@ -171,7 +171,8 @@
 
           <div class="form-row">
             <label for="post-image">Image optionnelle</label>
-            <input id="post-image" name="image_url" type="url" placeholder="https://...">
+            <input id="post-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+            <span class="form-hint">Formats acceptes : JPG, PNG, WebP ou GIF. Taille maximum : 5 Mo.</span>
           </div>
 
           <div class="form-actions">
@@ -658,6 +659,45 @@
         .filter(Boolean);
     };
 
+    const validatePostImage = (file) => {
+      if (!file || file.size === 0) {
+        return;
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error("Format image non supporte. Utilise JPG, PNG, WebP ou GIF.");
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("L'image ne doit pas depasser 5 Mo.");
+      }
+    };
+
+    const uploadPostImage = async (file) => {
+      if (!file || file.size === 0) {
+        return "";
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/uploads/images", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${getAccessToken()}`
+        },
+        body: formData
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || "Upload de l'image impossible.");
+      }
+
+      return payload.url;
+    };
+
     const createPost = async (form) => {
       if (!requireAuth()) {
         return;
@@ -665,17 +705,27 @@
 
       const submitButton = form.querySelector("button[type='submit']");
       const formData = new FormData(form);
-      const payload = {
-        title: formData.get("title").trim(),
-        content: formData.get("content").trim(),
-        image_url: formData.get("image_url").trim(),
-        tags: parseTags(formData.get("tags"))
-      };
 
       submitButton.disabled = true;
       emptyState.style.display = "none";
 
       try {
+        const tags = parseTags(formData.get("tags"));
+        const image = formData.get("image");
+
+        if (tags.length < 2) {
+          throw new Error("Ajoute au moins deux tags.");
+        }
+
+        validatePostImage(image);
+        const imageUrl = await uploadPostImage(image);
+        const payload = {
+          title: formData.get("title").trim(),
+          content: formData.get("content").trim(),
+          image_url: imageUrl,
+          tags
+        };
+
         const response = await fetch("/api/posts", {
           method: "POST",
           headers: {
