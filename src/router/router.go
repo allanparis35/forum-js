@@ -21,9 +21,9 @@ func SetupRoutes() *mux.Router {
 	r.HandleFunc("/api/forgot-password", handlers.ResetPassword).Methods("POST")
 	r.HandleFunc("/api/confirm-reset", handlers.ConfirmResetPassword).Methods("POST")
 
-	r.HandleFunc("/api/posts", handlers.ListPosts).Methods("GET")
+	r.Handle("/api/posts", middleware.OptionalJWTMiddleware(http.HandlerFunc(handlers.ListPosts))).Methods("GET")
 	r.Handle("/api/posts", middleware.JWTMiddleware(http.HandlerFunc(handlers.CreatePost))).Methods("POST")
-	r.HandleFunc("/api/posts/{id}", handlers.GetPost).Methods("GET")
+	r.Handle("/api/posts/{id}", middleware.OptionalJWTMiddleware(http.HandlerFunc(handlers.GetPost))).Methods("GET")
 	r.Handle("/api/posts/{id}/comments", middleware.JWTMiddleware(http.HandlerFunc(handlers.CreateComment))).Methods("POST")
 	r.Handle("/api/posts/{id}/vote", middleware.JWTMiddleware(http.HandlerFunc(handlers.VotePost))).Methods("POST")
 	r.Handle("/api/posts/{id}/favorite", middleware.JWTMiddleware(http.HandlerFunc(handlers.ToggleFavorite))).Methods("POST")

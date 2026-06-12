@@ -587,6 +587,10 @@
     font-weight: inherit;
   }
 
+  .post-actions button.active {
+    color: var(--blue-light);
+  }
+
   .post-side {
     min-width: 92px;
     display: grid;

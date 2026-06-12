@@ -105,11 +105,11 @@
       <section class="panel">
         <div class="panel-title">Mon espace</div>
         <nav class="nav-list">
-          <button class="nav-item" type="button" data-auth-required="true">
+          <button class="nav-item" type="button" data-auth-required="true" data-feed-filter="mine">
             <span class="nav-icon">□</span>
             Mes posts
           </button>
-          <button class="nav-item" type="button" data-auth-required="true">
+          <button class="nav-item" type="button" data-auth-required="true" data-feed-filter="favorites">
             <span class="nav-icon">♡</span>
             Favoris
           </button>
@@ -432,7 +432,8 @@
     const state = {
       sort: "popular",
       tag: "all",
-      query: ""
+      query: "",
+      filter: ""
     };
 
     const postList = document.querySelector("[data-post-list]");
@@ -471,6 +472,10 @@
 
       if (state.query) {
         params.set("q", state.query);
+      }
+
+      if (state.filter) {
+        params.set("filter", state.filter);
       }
 
       return `/api/posts?${params.toString()}`;
@@ -518,6 +523,10 @@
       fragment.querySelector("[data-last-activity]").textContent = "Derniere activite";
       fragment.querySelector("[data-views]").textContent = `${post.likes_count} likes`;
 
+      const favoriteButton = fragment.querySelector("[data-action='favorite']");
+      favoriteButton.classList.toggle("active", Boolean(post.is_favorite));
+      favoriteButton.textContent = post.is_favorite ? "Favori" : "Favoris";
+
       tagsContainer.replaceChildren(...tags.map(createTagElement));
 
       return fragment;
@@ -547,7 +556,12 @@
       emptyState.style.display = "none";
 
       try {
-        const response = await fetch(buildPostsUrl());
+        const headers = {};
+        if (getAccessToken()) {
+          headers.Authorization = `Bearer ${getAccessToken()}`;
+        }
+
+        const response = await fetch(buildPostsUrl(), { headers });
         const payload = await response.json();
 
         if (!response.ok) {
@@ -561,6 +575,42 @@
         emptyState.style.display = "block";
       } finally {
         postList.setAttribute("aria-busy", "false");
+      }
+    };
+
+    const toggleFavorite = async (button) => {
+      if (!requireAuth()) {
+        return;
+      }
+
+      const card = button.closest("[data-post-id]");
+      button.disabled = true;
+
+      try {
+        const response = await fetch(`/api/posts/${card.dataset.postId}/favorite`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${getAccessToken()}`,
+            "Content-Type": "application/json"
+          }
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.message || "Modification du favori impossible.");
+        }
+
+        button.classList.toggle("active", Boolean(payload.is_favorite));
+        button.textContent = payload.is_favorite ? "Favori" : "Favoris";
+
+        if (state.filter === "favorites" && !payload.is_favorite) {
+          await loadPosts();
+        }
+      } catch (error) {
+        emptyState.textContent = error.message;
+        emptyState.style.display = "block";
+      } finally {
+        button.disabled = false;
       }
     };
 
@@ -660,6 +710,7 @@
           return;
         }
 
+        state.filter = tab.dataset.sort === "saved" ? "favorites" : "";
         state.sort = tab.dataset.sort === "saved" ? "popular" : tab.dataset.sort;
         setActive(document.querySelectorAll(".tab"), tab);
         loadPosts();
@@ -672,8 +723,16 @@
           return;
         }
 
-        if (item.dataset.feedFilter === "popular" || item.dataset.feedFilter === "recent") {
+        if (item.dataset.feedFilter === "favorites" || item.dataset.feedFilter === "mine") {
+          state.filter = item.dataset.feedFilter;
+          loadPosts();
+        } else if (item.dataset.feedFilter === "popular" || item.dataset.feedFilter === "recent") {
+          state.filter = "";
           state.sort = item.dataset.feedFilter;
+          loadPosts();
+        } else if (item.dataset.feedFilter === "home") {
+          state.filter = "";
+          state.sort = "popular";
           loadPosts();
         }
 
@@ -712,6 +771,7 @@
     postList.addEventListener("click", (event) => {
       const voteButton = event.target.closest("[data-vote]");
       const replyButton = event.target.closest("[data-action='reply']");
+      const favoriteButton = event.target.closest("[data-action='favorite']");
 
       if (voteButton) {
         voteForPost(voteButton);
@@ -720,6 +780,10 @@
       if (replyButton) {
         const card = replyButton.closest("[data-post-id]");
         window.location.assign(`post.html?id=${card.dataset.postId}#comments`);
+      }
+
+      if (favoriteButton) {
+        toggleFavorite(favoriteButton);
       }
     });
 

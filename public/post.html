@@ -181,7 +181,12 @@
       detail.setAttribute("aria-busy", "true");
 
       try {
-        const response = await fetch(`/api/posts/${postId}`);
+        const headers = {};
+        if (getAccessToken()) {
+          headers.Authorization = `Bearer ${getAccessToken()}`;
+        }
+
+        const response = await fetch(`/api/posts/${postId}`, { headers });
         const payload = await response.json();
 
         if (!response.ok) {

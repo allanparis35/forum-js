@@ -85,13 +85,13 @@ func ListPosts(w http.ResponseWriter, r *http.Request) {
 	case "unanswered":
 		query = query.Where("NOT EXISTS (?)",
 			database.DB.Model(&models.Comment{}).Select("1").Where("comments.post_id = posts.id"),
-		).Order("created_at DESC")
+		).Order("posts.created_at DESC")
 	// Tri des posts par récent
 	case "recent":
-		query = query.Order("created_at DESC")
+		query = query.Order("posts.created_at DESC")
 	default:
 		// Tri des posts par récent
-		query = query.Order("created_at DESC")
+		query = query.Order("posts.created_at DESC")
 	}
 
 	// Filtre par tag si le tag n'est pas vide et si le tag n'est pas "all"
@@ -108,6 +108,22 @@ func ListPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, _ := getUserIDFromContext(r)
+
+	switch r.URL.Query().Get("filter") {
+	case "favorites":
+		if userID <= 0 {
+			writeError(w, http.StatusUnauthorized, "utilisateur non authentifie")
+			return
+		}
+		query = query.Joins("JOIN favorites ON favorites.post_id = posts.id").
+			Where("favorites.user_id = ?", userID)
+	case "mine":
+		if userID <= 0 {
+			writeError(w, http.StatusUnauthorized, "utilisateur non authentifie")
+			return
+		}
+		query = query.Where("posts.user_id = ?", userID)
+	}
 
 	// Récupération des posts
 	if err := query.Find(&posts).Error; err != nil {
